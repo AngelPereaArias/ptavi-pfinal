@@ -1,0 +1,8 @@
+<config>
+	<account username="Kylo_Ren@SW.es" passwd="myfatheris_hansolo" />
+	<uaserver ip="127.0.0.1" puerto="5331" />
+	<rtpaudio puerto="5332" />
+	<regproxy ip="127.0.0.1" puerto="5991" />
+	<log path="registro_UA1.txt" />
+	<audio path="cancion.mp3" />
+</config>
