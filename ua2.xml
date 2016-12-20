@@ -1,0 +1,8 @@
+<config>
+	<account username="Han_Solo@SW.es" passwd="love4chewbacca" />
+	<uaserver ip="127.0.0.1" puerto="5661" />
+	<rtpaudio puerto="5662" />
+	<regproxy ip="127.0.0.1" puerto="5991" />
+	<log path="registro_UA2.txt" />
+	<audio path="cancion.mp3" />
+</config>
