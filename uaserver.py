@@ -93,10 +93,12 @@ class ServerHandler(ContentHandler):
     def Register(self):
         """ Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] + ":"
-        head_register += self.Trunk[1]["uaserver"]["puerto"] + " SIP/2.0\r\nExpires: " + "0"
+        head_register += self.Trunk[1]["uaserver"]["puerto"] 
+        head_register += " SIP/2.0\r\nExpires: " + "0"
         self.send(head_register)
 
-        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":" + self.Trunk[3]["regproxy"]["puerto"]
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":" 
+        log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += ": " + head_register
         self.to_log_txt(log_msg)
 
@@ -117,7 +119,8 @@ class EHand(socketserver.DatagramRequestHandler):
         method = line[:line.find(" ")]
 
         #Guardarlo en PROXY_LOG.TXT
-        handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + line)
+        log_txt = "Received from " + IP + ":" + str(PORT) + ": " + line
+        handler.to_log_txt(Logtxt)
 
         if method == "INVITE":
             handler.RTP_Port = line.split("m=audio ")[1][:-5]
@@ -125,24 +128,25 @@ class EHand(socketserver.DatagramRequestHandler):
             head_invite = handler.MSGS[0] + "\r\n\r\n"
             head_invite += handler.MSGS[1] + "\r\n\r\n"
             head_invite += handler.MSGS[2] + "\r\n\r\n"
-            head_invite += "Content-Type: application/sdp\r\n\r\n"
-            head_invite += "\r\nv=0\r\no=" + handler.Trunk[0]["account"]["username"]
+            head_invite += "Content-Type: application/sdp\r\n\r\n\r\nv=0"
+            head_invite += "\r\no=" + handler.Trunk[0]["account"]["username"]
             head_invite += "\r\ns=misesion\r\nt=0\r\nm=audio "
             head_invite += handler.Trunk[2]["rtpaudio"]["puerto"] + " RTP\r\n"
             #handler.send(head_invite)
             self.wfile.write(bytes(head_invite, 'utf-8'))
 
             log_msg = "Sent to " + handler.Trunk[3]["regproxy"]["ip"] + ":"
-            log_msg += handler.Trunk[3]["regproxy"]["puerto"] + ": " + head_invite
+            log_msg += handler.Trunk[3]["regproxy"]["puerto"] 
+            log_msg += ": " + head_invite
             handler.to_log_txt(log_msg)
         elif method == "ACK":
             receptor_IP = "127.0.0.1"
             receptor_Puerto = handler.RTP_Port
             fichero_audio = handler.Trunk[5]["audio"]["path"]
-            aEjecutar = "./mp32rtp -i " + receptor_IP + " -p " + receptor_Puerto
-            aEjecutar += " < " + fichero_audio
+            aEjec = "./mp32rtp -i " + receptor_IP + " -p " + receptor_Puerto
+            aEjec += " < " + fichero_audio
 
-            os.system(aEjecutar)
+            os.system(aEjec)
         elif method == "BYE":
             head_ok = handler.MSGS[2] + "\r\n\r\n"
             self.wfile.write(bytes(head_ok, 'utf-8'))
