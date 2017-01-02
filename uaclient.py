@@ -6,6 +6,8 @@ from xml.sax.handler import ContentHandler
 import sys
 import time
 import socket
+import hashlib
+
 
 class ClientHandler(ContentHandler):
     def __init__(self):
@@ -16,21 +18,20 @@ class ClientHandler(ContentHandler):
                         "regproxy": ["ip", "puerto"],
                         "log": ["path"],
                         "audio": ["path"]}
-#        self.my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
- #       self.my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-  #      self.my_socket.connect(("127.0.0.1" , 5991))
 
     def to_log_txt(self, txt):
         log_xml = open(self.Trunk[4]["log"]["path"], 'a')
 
         Time = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
-        Log_Record = str(Time) + " " + txt + "\r\n"
-
-        log_xml.write(Log_Record)
+        Log_Record = str(Time) + " " + txt
+        Log_Record_Fix = Log_Record.replace("\r\n", " ") + "\r\n"
+        if txt == "":
+            Log_Record_Fix = "\r\n"
+        log_xml.write(Log_Record_Fix)
         log_xml.close()
 
         #Imprime todo lo incluido al registro LOG /!\TRAZAS/!\
-        print(Log_Record)
+        print(Log_Record_Fix[:-1])
 
     def startElement(self, name, attrs):
         if name in self.General:
@@ -51,55 +52,132 @@ class ClientHandler(ContentHandler):
                 doc = doc + "\n"
 
         return doc
+
+    def receive(self):
+        try:
+            data = my_socket.recv(1024)
+        except:
+            log_txt = "Error: No server listening at " + proxy_ip
+            log_txt += " port " + proxy_port + "\r\n"
+            handler.to_log_txt(log_txt)
+            sys.exit()
+
+        proxy_ip = handler.Trunk[3]["regproxy"]["ip"]
+        proxy_port = handler.Trunk[3]["regproxy"]["puerto"]
+        data_rcv = data.decode("utf-8")
+        log_ip_port = "Received from " + proxy_ip + ":" + proxy_port + ": "
+        data_log = log_ip_port + data_rcv
+        self.to_log_txt(data_log)
+
+        if data_rcv[:11] == "SIP/2.1 401":
+            nonce = data_rcv[data_rcv.find('"')+1:data_rcv.rfind('"')]
+            m = hashlib.sha1()
+            PASSWORD = self.Trunk[0]["account"]["passwd"]
+
+            m.update(bytes(PASSWORD + nonce, 'utf-8'))
+            Dig_resp = m.hexdigest()
+
+            acc_username = self.Trunk[0]["account"]["username"]
+            serv_port = self.Trunk[1]["uaserver"]["puerto"]
+            head_register = "REGISTER sip:" + acc_username + ":" + serv_port
+            head_register += " SIP/2.0\r\nExpires: " + OPTION
+            head_register += '\r\nAuthorization: Digest response="'
+            head_register += Dig_resp + '"'
+            self.send(head_register)
+
+            log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
+            log_msg += self.Trunk[3]["regproxy"]["puerto"]
+            log_msg += ": " + head_register
+            self.to_log_txt(log_msg)
+
+            self.receive()
+        elif data_rcv[:11] == "SIP/2.0 100":
+            self.Ack(OPTION)
+
     def send(self, message):
         my_socket.send(bytes(message, 'utf-8'))
 
-
     def Register(self, option):
         """ Método REGISTER."""
-        head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] + ":"
-        head_register += self.Trunk[1]["uaserver"]["puerto"] + " SIP/2.0\r\nExpires: " + option
+        head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"]
+        head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
+        head_register += " SIP/2.0\r\nExpires: " + option
         self.send(head_register)
 
-        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":" + self.Trunk[3]["regproxy"]["puerto"]
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
+        log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += " " + head_register
         self.to_log_txt(log_msg)
 
-        print(head_register)
+        self.receive()
+
         #enviar al servidor de registro
         #recibir del servidor de registro
 
-if __name__ == "__main__":
-    try:
-        UA1_XML, METHOD, OPTION = sys.argv[2:]
-    except:
-        sys.exit("Usage: python3 uaclient.py config metodo opcion")
+    def Invite(self, option):
+        head_invite = "INVITE sip:" + option
+        head_invite += " SIP/2.0\r\nContent-Type: application/sdp\r\n\r\n"
+        head_invite += "v=0\r\no=" + self.Trunk[0]["account"]["username"]
+        head_invite += "\r\ns=misesion\r\nt=0\r\nm=audio "
+        head_invite += self.Trunk[2]["rtpaudio"]["puerto"] + " RTP\r\n"
+        self.send(head_invite)
 
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
+        log_msg += + self.Trunk[3]["regproxy"]["puerto"]
+        log_msg += " " + head_invite
+        self.to_log_txt(log_msg)
+
+        self.receive()
+
+    def Ack(self, option):
+        head_ack = "ACK sip:" + option + " SIP/2.0"
+        self.send(head_ack)
+
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
+        log_msg += self.Trunk[3]["regproxy"]["puerto"]
+        log_msg += " " + head_ack
+        self.to_log_txt(log_msg)
+
+    def Bye(self, option):
+        head_bye = "BYE sip:" + option + " SIP/2.0"
+        self.send(head_bye)
+
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
+        log_msg += self.Trunk[3]["regproxy"]["puerto"]
+        log_msg += " " + head_bye
+        self.to_log_txt(log_msg)
+
+        self.receive()
+
+if __name__ == "__main__":
+
+    try:
+        UA1_XML, METHOD, OPTION = sys.argv[1:]
+    except ValueError:
+        sys.exit("Usage: python3 uaclient.py config metodo opcion")
 
     parser = make_parser()
     handler = ClientHandler()
     parser.setContentHandler(handler)
-    parser.parse(open("ua1.xml"))
+    parser.parse(open(UA1_XML))
+
+    handler.to_log_txt("Starting...")
 
     proxy_ip = handler.Trunk[3]["regproxy"]["ip"]
     proxy_port = handler.Trunk[3]["regproxy"]["puerto"]
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    my_socket.connect((proxy_ip , int(proxy_port)))
-
+    my_socket.connect((proxy_ip, int(proxy_port)))
 
     methods = ["REGISTER", "INVITE", "BYE"]
     if METHOD == methods[0]:
         handler.Register(OPTION)
     elif METHOD == methods[1]:
-        print(METHOD)
+        handler.Invite(OPTION)
     elif METHOD == methods[2]:
-        print(METHOD)
+        handler.Bye(OPTION)
     else:
         sys.exit("Usage: python3 uaclient.py config metodo opcion")
 
-
-    #IP = handler.Trunk[1]["uaserver"]["ip"]
-    #PORT = handler.Trunk[1]["uaserver"]["puerto"]
-
-    #handler.to_log_txt("Error: No server listening at " + IP + " port " + PORT + "\r\n")
+    handler.to_log_txt("Finishing.")
+    handler.to_log_txt("")
