@@ -100,7 +100,7 @@ class ClientHandler(ContentHandler):
 
         #Recibimos TRYING/RINGING/OK.
         elif data_rcv[:11] == "SIP/2.0 100":
-            self.Ack(OPTION)                
+            self.Ack(OPTION)
 
     def send(self, message):
         my_socket.send(bytes(message, 'utf-8'))
