@@ -62,6 +62,7 @@ class ClientHandler(ContentHandler):
             handler.to_log_txt(log_txt)
             sys.exit()
 
+        #Guardamos en el LOG.
         proxy_ip = handler.Trunk[3]["regproxy"]["ip"]
         proxy_port = handler.Trunk[3]["regproxy"]["puerto"]
         data_rcv = data.decode("utf-8")
@@ -69,7 +70,8 @@ class ClientHandler(ContentHandler):
         data_log = log_ip_port + data_rcv
         self.to_log_txt(data_log)
 
-        if data_rcv[:11] == "SIP/2.1 401":
+        #Respuesta No Autorizado.
+        if data_rcv[:11] == "SIP/2.0 401":
             nonce = data_rcv[data_rcv.find('"')+1:data_rcv.rfind('"')]
             m = hashlib.sha1()
             PASSWORD = self.Trunk[0]["account"]["passwd"]
@@ -79,20 +81,26 @@ class ClientHandler(ContentHandler):
 
             acc_username = self.Trunk[0]["account"]["username"]
             serv_port = self.Trunk[1]["uaserver"]["puerto"]
+
+            #Nuevo Mensaje con info de registro.
             head_register = "REGISTER sip:" + acc_username + ":" + serv_port
             head_register += " SIP/2.0\r\nExpires: " + OPTION
             head_register += '\r\nAuthorization: Digest response="'
-            head_register += Dig_resp + '"'
+            head_register += Dig_resp + '"' + "\r\n"
             self.send(head_register)
 
+            #Guardamos en el LOG.
             log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
             log_msg += self.Trunk[3]["regproxy"]["puerto"]
             log_msg += ": " + head_register
             self.to_log_txt(log_msg)
 
+            #Recibiremos OK.
             self.receive()
+
+        #Recibimos TRYING/RINGING/OK.
         elif data_rcv[:11] == "SIP/2.0 100":
-            self.Ack(OPTION)
+            self.Ack(OPTION)                
 
     def send(self, message):
         my_socket.send(bytes(message, 'utf-8'))
@@ -104,49 +112,57 @@ class ClientHandler(ContentHandler):
         head_register += " SIP/2.0\r\nExpires: " + option
         self.send(head_register)
 
+        #Guardamos en el LOG.
         log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
         log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += " " + head_register
         self.to_log_txt(log_msg)
 
+        #Recibimos respuesta(SIN AUTORIZACIÓN).
         self.receive()
 
-        #enviar al servidor de registro
-        #recibir del servidor de registro
-
     def Invite(self, option):
+        """ Método INVITE."""
         head_invite = "INVITE sip:" + option
         head_invite += " SIP/2.0\r\nContent-Type: application/sdp\r\n\r\n"
         head_invite += "v=0\r\no=" + self.Trunk[0]["account"]["username"]
+        head_invite += " " + self.Trunk[1]["uaserver"]["puerto"]
         head_invite += "\r\ns=misesion\r\nt=0\r\nm=audio "
         head_invite += self.Trunk[2]["rtpaudio"]["puerto"] + " RTP\r\n"
         self.send(head_invite)
 
+        #Guardamos en el LOG.
         log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
-        log_msg += + self.Trunk[3]["regproxy"]["puerto"]
+        log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += " " + head_invite
         self.to_log_txt(log_msg)
 
+        #Recibiremos TRYING/RINGING/OK.
         self.receive()
 
     def Ack(self, option):
+        """ Método ACK."""
         head_ack = "ACK sip:" + option + " SIP/2.0"
         self.send(head_ack)
 
+        #Guardamos en el LOG.
         log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
         log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += " " + head_ack
         self.to_log_txt(log_msg)
 
     def Bye(self, option):
+        """ Método BYE."""
         head_bye = "BYE sip:" + option + " SIP/2.0"
         self.send(head_bye)
 
+        #Guardamos en el LOG.
         log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
         log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += " " + head_bye
         self.to_log_txt(log_msg)
 
+        #Recibiremos OK.
         self.receive()
 
 if __name__ == "__main__":
