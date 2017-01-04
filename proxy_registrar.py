@@ -67,7 +67,7 @@ class ProxyHandler(ContentHandler):
 
 class EHand(socketserver.DatagramRequestHandler):
     def Check_passwd(self, user, Dig_resp):
-        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las 
+        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las
            dos para ver si son igauales"""
         Find = False
         passwd = open(handler.Trunk[1]["database"]["passwdpath"], 'r')
@@ -121,7 +121,7 @@ class EHand(socketserver.DatagramRequestHandler):
                 msg = handler.MSGS[4] + '\r\nWWW Authenticate: Digest nonce="'
                 msg += handler.NONCE + '"\r\n\r\n'
                 self.wfile.write(bytes(msg, 'utf-8'))
-                
+
                 log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
                 handler.to_log_txt(log_txt)
             else:
@@ -136,14 +136,14 @@ class EHand(socketserver.DatagramRequestHandler):
                     log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
                     handler.to_log_txt(log_txt)
 
-                    #Registramos a los usuarios autenticados en 
+                    #Registramos a los usuarios autenticados en
                     #nuestra base de datos "Database.txt".
                     new_line = line.split(":")
                     User = new_line[1]
                     Port_user = new_line[2].split(" ")[0]
                     T = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
                     Exp_Time = new_line[3].split("\r\n")[0][1:]
-                    data_user = User + ":" + IP + ":" + Port_user + ":" + T 
+                    data_user = User + ":" + IP + ":" + Port_user + ":" + T
                     data_user += ":" + Exp_Time
                     handler.Add_to_Database(data_user)
                 else:
@@ -204,7 +204,7 @@ class EHand(socketserver.DatagramRequestHandler):
 
             data = my_socket.recv(1024)
             data_rcv = data.decode("utf-8")
-            
+
             log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
             handler.to_log_txt(log_txt)
 
@@ -212,7 +212,7 @@ class EHand(socketserver.DatagramRequestHandler):
 
             IP = self.client_address[0]
             PORT = self.client_address[1]
-        
+
             log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + data_rcv
             handler.to_log_txt(log_txt)
 
