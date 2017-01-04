@@ -22,7 +22,7 @@ class ProxyHandler(ContentHandler):
                      "SIP/2.0 180 Ring",
                      "SIP/2.0 200 OK",
                      "SIP/2.0 400 Bad Request",
-                     "SIP/2.1 401 Unauthorized",
+                     "SIP/2.0 401 Unauthorized",
                      "SIP/2.0 404 User Not Found",
                      "SIP/2.0 405 Method Not Allowed"]
         self.NONCE = str(random.getrandbits(100))
@@ -67,7 +67,7 @@ class ProxyHandler(ContentHandler):
 
 class EHand(socketserver.DatagramRequestHandler):
     def Check_passwd(self, user, Dig_resp):
-        """Buscamos usuarios en passwords.txt, creamos Dig_resp y comparamos las dos para ver si son igauales"""
+        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las dos para ver si son igauales"""
         Find = False
         passwd = open(handler.Trunk[1]["database"]["passwdpath"], 'r')
         lines = passwd.readlines()
@@ -103,6 +103,7 @@ class EHand(socketserver.DatagramRequestHandler):
         line = line.decode("utf-8")
         method = line[:line.find(" ")]
 
+        METHODS = ["REGISTER", "INVITE", "BYE", "ACK"]
         #Dirección de recepción
         IP = self.client_address[0]
         PORT = self.client_address[1]
@@ -152,11 +153,20 @@ class EHand(socketserver.DatagramRequestHandler):
             my_socket.connect(self.Get_IP_PORT(To_user))
             my_socket.send(bytes(line, 'utf-8'))
 
+            IP = self.Get_IP_PORT(To_user)[0]
+            PORT = self.Get_IP_PORT(To_user)[1]
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
+
             data = my_socket.recv(1024)
             data_rcv = data.decode("utf-8")
 
+            handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + data_rcv)
+
             self.wfile.write(bytes(data_rcv, 'utf-8'))
 
+            IP = self.client_address[0]
+            PORT = self.client_address[1]
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + data_rcv)
         elif method == "ACK":
             To_user = line.split(" ")[1][4:]
 
@@ -164,6 +174,11 @@ class EHand(socketserver.DatagramRequestHandler):
             my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             my_socket.connect(self.Get_IP_PORT(To_user))
             my_socket.send(bytes(line, 'utf-8'))
+
+            IP = self.Get_IP_PORT(To_user)[0]
+            PORT = self.Get_IP_PORT(To_user)[1]
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
+
         elif method == "BYE":
             To_user = line.split(" ")[1][4:]
 
@@ -172,10 +187,25 @@ class EHand(socketserver.DatagramRequestHandler):
             my_socket.connect(self.Get_IP_PORT(To_user))
             my_socket.send(bytes(line, 'utf-8'))
 
+            IP = self.Get_IP_PORT(To_user)[0]
+            PORT = self.Get_IP_PORT(To_user)[1]
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
+
             data = my_socket.recv(1024)
             data_rcv = data.decode("utf-8")
+            handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + data_rcv)
 
             self.wfile.write(bytes(data_rcv, 'utf-8'))
+
+            IP = self.client_address[0]
+            PORT = self.client_address[1]
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + data_rcv)
+
+        elif method not in METHODS:
+            msg = handler.MSGS[6]
+            self.wfile.write(bytes(msg, 'utf-8'))
+            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + msg)
+
 if __name__ == "__main__":
 
     try:
