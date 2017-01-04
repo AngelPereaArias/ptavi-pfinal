@@ -1,5 +1,5 @@
 <config>
-	<account username="Kylo_Ren@SW.es" passwd="myfatheris_hansolo" />
+	<account username="Kylo_Ren@SW.es" passwd="myfatheris_indianajones" />
 	<uaserver ip="127.0.0.1" puerto="5331" />
 	<rtpaudio puerto="5332" />
 	<regproxy ip="127.0.0.1" puerto="5991" />
