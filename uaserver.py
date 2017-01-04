@@ -76,14 +76,18 @@ class ServerHandler(ContentHandler):
 
             m.update(bytes(PASSWORD + nonce, 'utf-8'))
             Dig_resp = m.hexdigest()
-
-            head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] + ":"
-            head_register += self.Trunk[1]["uaserver"]["puerto"] + " SIP/2.0\r\nExpires: " + "0"
-            head_register += '\r\nAuthorization: Digest response="' + Dig_resp + '"'
+            
+            USERNAME = self.Trunk[0]["account"]["username"]
+            USER_PORT = self.Trunk[1]["uaserver"]["puerto"]
+            head_register = "REGISTER sip:" + USERNAME + ":"
+            head_register += USER_PORT + " SIP/2.0\r\nExpires: " + "0"
+            head_register += '\r\nAuthorization: Digest response="' 
+            head_register += Dig_resp + '"'
             self.send(head_register)
 
             log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
-            log_msg += self.Trunk[3]["regproxy"]["puerto"] + ": " + head_register
+            log_msg += self.Trunk[3]["regproxy"]["puerto"] + ": " 
+            log_msg += head_register
             self.to_log_txt(log_msg)
 
             self.receive()
@@ -93,8 +97,8 @@ class ServerHandler(ContentHandler):
 
     def Register(self):
         """ Método REGISTER."""
-        head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] + ":"
-        head_register += self.Trunk[1]["uaserver"]["puerto"]
+        head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] 
+        head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
         head_register += " SIP/2.0\r\nExpires: " + "0"
         self.send(head_register)
 
