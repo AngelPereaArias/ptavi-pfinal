@@ -67,7 +67,8 @@ class ProxyHandler(ContentHandler):
 
 class EHand(socketserver.DatagramRequestHandler):
     def Check_passwd(self, user, Dig_resp):
-        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las dos para ver si son igauales"""
+        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las 
+           dos para ver si son igauales"""
         Find = False
         passwd = open(handler.Trunk[1]["database"]["passwdpath"], 'r')
         lines = passwd.readlines()
@@ -109,16 +110,20 @@ class EHand(socketserver.DatagramRequestHandler):
         PORT = self.client_address[1]
 
         #Guardarlo en PROXY_LOG.TXT
-        handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + line)
+        log_txt = "Received from " + IP + ":" + str(PORT) + ": " + line
+        handler.to_log_txt(log_txt)
         #Gestión dependidento del método
         if method == "REGISTER":
             #Mensaje tipo register
             check = line[line.find("Authorization")]
             if check == "0":
                 #Mensaje sin datos de Registro
-                msg = handler.MSGS[4] + '\r\nWWW Authenticate: Digest nonce="' + handler.NONCE + '"\r\n\r\n'
+                msg = handler.MSGS[4] + '\r\nWWW Authenticate: Digest nonce="'
+                msg += handler.NONCE + '"\r\n\r\n'
                 self.wfile.write(bytes(msg, 'utf-8'))
-                handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + msg)
+                
+                log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
+                handler.to_log_txt(log_txt)
             else:
                 #Mensaje con datos de Registro
                 list_msg = line.split('\r\n')
@@ -128,21 +133,25 @@ class EHand(socketserver.DatagramRequestHandler):
                     #Tupla usuario contraseña encontrado.
                     msg = handler.MSGS[2] + "\r\n\r\n"
                     self.wfile.write(bytes(msg, 'utf-8'))
-                    handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + msg)
+                    log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
+                    handler.to_log_txt(log_txt)
 
-                    #Registramos a los usuarios autenticados en nuestra base de datos "Database.txt".
+                    #Registramos a los usuarios autenticados en 
+                    #nuestra base de datos "Database.txt".
                     new_line = line.split(":")
                     User = new_line[1]
                     Port_user = new_line[2].split(" ")[0]
-                    Time = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
+                    T = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
                     Exp_Time = new_line[3].split("\r\n")[0][1:]
-                    data_user = User + ":" + IP + ":" + Port_user + ":" + Time + ":" + Exp_Time
+                    data_user = User + ":" + IP + ":" + Port_user + ":" + T 
+                    data_user += ":" + Exp_Time
                     handler.Add_to_Database(data_user)
                 else:
                     #Tupla usuario contraseña no encontrado.
                     msg = handler.MSGS[5] + "\r\n\r\n"
                     self.wfile.write(bytes(msg, 'utf-8'))
-                    handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + msg)
+                    log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
+                    handler.to_log_txt(log_txt)
         elif method == "INVITE":
             handler.Invite_name = line.split("o=")[1].split("\r\n")[0]
 
@@ -160,13 +169,15 @@ class EHand(socketserver.DatagramRequestHandler):
             data = my_socket.recv(1024)
             data_rcv = data.decode("utf-8")
 
-            handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + data_rcv)
+            log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
+            handler.to_log_txt(log_txt)
 
             self.wfile.write(bytes(data_rcv, 'utf-8'))
 
             IP = self.client_address[0]
             PORT = self.client_address[1]
-            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + data_rcv)
+            log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + data_rcv
+            handler.to_log_txt(log_txt)
         elif method == "ACK":
             To_user = line.split(" ")[1][4:]
 
@@ -193,13 +204,17 @@ class EHand(socketserver.DatagramRequestHandler):
 
             data = my_socket.recv(1024)
             data_rcv = data.decode("utf-8")
-            handler.to_log_txt("Received from " + IP + ":" + str(PORT) + ": " + data_rcv)
+            
+            log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
+            handler.to_log_txt(log_txt)
 
             self.wfile.write(bytes(data_rcv, 'utf-8'))
 
             IP = self.client_address[0]
             PORT = self.client_address[1]
-            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + data_rcv)
+        
+            log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + data_rcv
+            handler.to_log_txt(log_txt)
 
         elif method not in METHODS:
             msg = handler.MSGS[6]
