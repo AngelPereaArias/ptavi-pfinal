@@ -1,5 +1,5 @@
 <config>
 	<server name="BitBotBitBot" ip="127.0.0.1" puerto="5991"/>
 	<database path="database.json" passwdpath="passwords"/>
-	<log path="Proxy_log.txt"/>
+	<log path="Registro_Proxy.txt"/>
 </config>
