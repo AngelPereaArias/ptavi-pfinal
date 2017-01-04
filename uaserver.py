@@ -19,6 +19,7 @@ class ServerHandler(ContentHandler):
                         "regproxy": ["ip", "puerto"],
                         "log": ["path"],
                         "audio": ["path"]}
+
         self.MSGS = ["SIP/2.0 100 Trying",
                      "SIP/2.0 180 Ring",
                      "SIP/2.0 200 OK",
@@ -68,7 +69,7 @@ class ServerHandler(ContentHandler):
         data_log = log_ip_port + data_rcv
         self.to_log_txt(data_log)
 
-        if data_rcv[:11] == "SIP/2.1 401":
+        if data_rcv[:11] == "SIP/2.0 401":
             nonce = data_rcv[data_rcv.find('"')+1:data_rcv.rfind('"')]
             m = hashlib.sha1()
             PASSWORD = self.Trunk[0]["account"]["passwd"]
@@ -93,11 +94,11 @@ class ServerHandler(ContentHandler):
     def Register(self):
         """ Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"] + ":"
-        head_register += self.Trunk[1]["uaserver"]["puerto"] 
+        head_register += self.Trunk[1]["uaserver"]["puerto"]
         head_register += " SIP/2.0\r\nExpires: " + "0"
         self.send(head_register)
 
-        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":" 
+        log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
         log_msg += self.Trunk[3]["regproxy"]["puerto"]
         log_msg += ": " + head_register
         self.to_log_txt(log_msg)
@@ -120,7 +121,9 @@ class EHand(socketserver.DatagramRequestHandler):
 
         #Guardarlo en PROXY_LOG.TXT
         log_txt = "Received from " + IP + ":" + str(PORT) + ": " + line
-        handler.to_log_txt(Logtxt)
+        handler.to_log_txt(log_txt)
+        METHODS = ["INVITE", "BYE", "ACK"]
+
 
         if method == "INVITE":
             handler.RTP_Port = line.split("m=audio ")[1][:-5]
@@ -136,7 +139,7 @@ class EHand(socketserver.DatagramRequestHandler):
             self.wfile.write(bytes(head_invite, 'utf-8'))
 
             log_msg = "Sent to " + handler.Trunk[3]["regproxy"]["ip"] + ":"
-            log_msg += handler.Trunk[3]["regproxy"]["puerto"] 
+            log_msg += handler.Trunk[3]["regproxy"]["puerto"]
             log_msg += ": " + head_invite
             handler.to_log_txt(log_msg)
         elif method == "ACK":
@@ -154,11 +157,23 @@ class EHand(socketserver.DatagramRequestHandler):
             log_msg = "Sent to " + handler.Trunk[3]["regproxy"]["ip"] + ":"
             log_msg += handler.Trunk[3]["regproxy"]["puerto"] + ": " + head_ok
             handler.to_log_txt(log_msg)
+
+        elif method not in METHODS:
+
+            head_MNA = handler.MSGS[6] + "\r\n\r\n"
+            self.wfile.write(bytes(head_MNA, 'utf-8'))
+
+            log_msg = "Sent to " + handler.Trunk[3]["regproxy"]["ip"] + ":"
+            log_msg += handler.Trunk[3]["regproxy"]["puerto"] + ": " + head_MNA
+            handler.to_log_txt(log_msg)
+
 if __name__ == "__main__":
     try:
         UA2_XML = sys.argv[1]
     except:
         sys.exit("Usage: python3 uaserver.py config")
+
+    print("Listening...")
 
     parser = make_parser()
     handler = ServerHandler()
