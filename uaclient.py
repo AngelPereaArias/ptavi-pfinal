@@ -178,7 +178,10 @@ if __name__ == "__main__":
     try:
         UA1_XML, METHOD, OPTION = sys.argv[1:]
     except ValueError:
-        sys.exit("Usage: python3 uaclient.py config metodo opcion")
+        print("Usage: python3 uaclient.py config metodo opcion")
+        print("       python3 uaclient.py ua1.xml REGISTER 3600")
+        print("       python3 uaclient.py ua1.xml INVITE Han_Solo@SW.es")
+        sys.exit("       python3 uaclient.py ua1.xml BYE Han_Solo@SW.es")
 
     parser = make_parser()
     handler = ClientHandler()
