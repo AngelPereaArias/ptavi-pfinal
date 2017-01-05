@@ -54,7 +54,6 @@ class ProxyHandler(ContentHandler):
 
     def Add_to_Database(self, txt):
         Found = False
-
         file = open(self.DataBase, 'r+')
         lines = file.readlines()
         for line in lines:
@@ -96,6 +95,14 @@ class EHand(socketserver.DatagramRequestHandler):
         Database.close()
         return(IP_PORT)
 
+    def User_Found(self, User):
+        found = False
+        Database = open(handler.DataBase, "r")
+        lines = Database.readlines()
+        for line in lines:
+            if User == line.split(":")[0]:
+                found = True
+        return found
     def handle(self):
         """Recepcion y envio de mensajes."""
 
@@ -115,9 +122,12 @@ class EHand(socketserver.DatagramRequestHandler):
         #Gestión dependidento del método
         if method == "REGISTER":
             #Mensaje tipo register
-            check = line[line.find("Authorization")]
-            if check == "0":
+            check = line.find("Authorization")
+            print(line.find("Authorization"))
+            print('"' + str(check) + '"')
+            if check == -1:
                 #Mensaje sin datos de Registro
+                print("estamos dentro")
                 msg = handler.MSGS[4] + '\r\nWWW Authenticate: Digest nonce="'
                 msg += handler.NONCE + '"\r\n\r\n'
                 self.wfile.write(bytes(msg, 'utf-8'))
@@ -127,8 +137,11 @@ class EHand(socketserver.DatagramRequestHandler):
             else:
                 #Mensaje con datos de Registro
                 list_msg = line.split('\r\n')
+                print("user : " + list_msg[0].split(":")[1])
                 user = list_msg[0].split(":")[1]
+                print(list_msg[2].split('"'))
                 Dig_resp = list_msg[2].split('"')[1]
+                print(Dig_resp)
                 if self.Check_passwd(user, Dig_resp):
                     #Tupla usuario contraseña encontrado.
                     msg = handler.MSGS[2] + "\r\n\r\n"
@@ -153,31 +166,40 @@ class EHand(socketserver.DatagramRequestHandler):
                     log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
                     handler.to_log_txt(log_txt)
         elif method == "INVITE":
+
             handler.Invite_name = line.split("o=")[1].split("\r\n")[0]
 
             To_user = line.split(" ")[1][4:]
+            found = self.User_Found(To_user)
+            print
+            if found:
+                my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                my_socket.connect(self.Get_IP_PORT(To_user))
+                my_socket.send(bytes(line, 'utf-8'))
 
-            my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            my_socket.connect(self.Get_IP_PORT(To_user))
-            my_socket.send(bytes(line, 'utf-8'))
+                IP = self.Get_IP_PORT(To_user)[0]
+                PORT = self.Get_IP_PORT(To_user)[1]
+                handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
 
-            IP = self.Get_IP_PORT(To_user)[0]
-            PORT = self.Get_IP_PORT(To_user)[1]
-            handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
+                data = my_socket.recv(1024)
+                data_rcv = data.decode("utf-8")
 
-            data = my_socket.recv(1024)
-            data_rcv = data.decode("utf-8")
+                log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
+                handler.to_log_txt(log_txt)
 
-            log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
-            handler.to_log_txt(log_txt)
+                self.wfile.write(bytes(data_rcv, 'utf-8'))
 
-            self.wfile.write(bytes(data_rcv, 'utf-8'))
-
-            IP = self.client_address[0]
-            PORT = self.client_address[1]
-            log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + data_rcv
-            handler.to_log_txt(log_txt)
+                IP = self.client_address[0]
+                PORT = self.client_address[1]
+                log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + data_rcv
+                handler.to_log_txt(log_txt)
+            else:
+                #usuario no encontrado.
+                msg = handler.MSGS[5] + "\r\n\r\n"
+                self.wfile.write(bytes(msg, 'utf-8'))
+                log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
+                handler.to_log_txt(log_txt)
         elif method == "ACK":
             To_user = line.split(" ")[1][4:]
 
@@ -234,6 +256,9 @@ if __name__ == "__main__":
     parser.parse(open(PR_XML))
 
     handler.to_log_txt("Starting...")
+
+    file = open(handler.DataBase, 'a')
+    file.close()
 
     NAME = handler.Trunk[0]["server"]["name"]
     IP = handler.Trunk[0]["server"]["ip"]
