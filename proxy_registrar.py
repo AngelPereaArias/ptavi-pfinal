@@ -249,9 +249,10 @@ if __name__ == "__main__":
 
     try:
         PR_XML = sys.argv[1]
-    except ValueError:
-        sys.exit("Usabe: python3 proxy_registrar.py config")
-
+    except:
+        print("Usage: python3 proxy_registrar.py config")
+        sys.exit("       python3 proxy_registrar.py pr.xml")
+        
     parser = make_parser()
     handler = ProxyHandler()
     parser.setContentHandler(handler)
