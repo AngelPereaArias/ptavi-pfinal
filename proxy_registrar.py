@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+"""Programa final PTAVI PROXY-REGISTRAR."""
+
 import socketserver
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
@@ -11,7 +13,10 @@ import socket
 
 
 class ProxyHandler(ContentHandler):
+    """Manejador Proxy-Registrar."""
+
     def __init__(self):
+        u"""Método Inicializar."""
         self.Trunk = []
 
         self.General = {"server": ["name", "ip", "puerto"],
@@ -39,6 +44,7 @@ class ProxyHandler(ContentHandler):
             self.Trunk.append(General_Slice)
 
     def to_log_txt(self, txt):
+        u"""Método para guardar en el LOG."""
         log_xml = open(self.Trunk[2]["log"]["path"], 'a')
 
         Time = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
@@ -53,6 +59,7 @@ class ProxyHandler(ContentHandler):
         print(Log_Record_Fix[:-1])
 
     def Add_to_Database(self, txt):
+        u"""Método añadir a la base de datos."""
         Found = False
         file = open(self.DataBase, 'r+')
         lines = file.readlines()
@@ -65,9 +72,10 @@ class ProxyHandler(ContentHandler):
 
 
 class EHand(socketserver.DatagramRequestHandler):
+    """Clase socketserver proxy_registrar.py."""
+
     def Check_passwd(self, user, Dig_resp):
-        """Buscamos usuarios en passwords, creamos Dig_resp y comparamos las
-           dos para ver si son igauales"""
+        u"""Método usuarios y passwords, creamos Dig_resp y comparamos las dos para ver si son igauales."""
         Find = False
         passwd = open(handler.Trunk[1]["database"]["passwdpath"], 'r')
         lines = passwd.readlines()
@@ -84,6 +92,7 @@ class EHand(socketserver.DatagramRequestHandler):
         return Find
 
     def Get_IP_PORT(self, User):
+        u"""Método obtención tupla IP, PUERTO."""
         Database = open(handler.DataBase, 'r')
         lines = Database.readlines()
         for line in lines:
@@ -96,6 +105,7 @@ class EHand(socketserver.DatagramRequestHandler):
         return(IP_PORT)
 
     def User_Found(self, User):
+        u"""Método usuario en base de datos."""
         found = False
         Database = open(handler.DataBase, "r")
         lines = Database.readlines()
@@ -106,7 +116,6 @@ class EHand(socketserver.DatagramRequestHandler):
 
     def handle(self):
         """Recepcion y envio de mensajes."""
-
         #Datos recibidos
         line = self.rfile.read()
         line = line.decode("utf-8")
