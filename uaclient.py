@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+"""Programa final PTAVI CLIENTE."""
 
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
@@ -10,7 +11,10 @@ import hashlib
 
 
 class ClientHandler(ContentHandler):
+    """Manejador Cliente."""
+
     def __init__(self):
+        u"""Método Inicializar."""
         self.Trunk = []
         self.General = {"account": ["username", "passwd"],
                         "uaserver": ["ip", "puerto"],
@@ -20,6 +24,7 @@ class ClientHandler(ContentHandler):
                         "audio": ["path"]}
 
     def to_log_txt(self, txt):
+        u"""Método para guardar en el LOG."""
         log_xml = open(self.Trunk[4]["log"]["path"], 'a')
 
         Time = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
@@ -34,6 +39,7 @@ class ClientHandler(ContentHandler):
         print(Log_Record_Fix[:-1])
 
     def startElement(self, name, attrs):
+        u"""Metodo Inicio."""
         if name in self.General:
             Value_Box = {}
             for i in self.General[name]:
@@ -42,7 +48,7 @@ class ClientHandler(ContentHandler):
             self.Trunk.append(General_Slice)
 
     def get_tags(self):
-        """ Devuelve los datos, con formato, obtenidos de "ua1.xml". """
+        """Devuelve los datos, con formato, obtenidos de "ua1.xml"."""
         doc = ""
         for dict_trunk in self.Trunk:
             for key in dict_trunk:
@@ -54,6 +60,7 @@ class ClientHandler(ContentHandler):
         return doc
 
     def receive(self):
+        u"""Método Recibir."""
         try:
             data = my_socket.recv(1024)
         except:
@@ -103,10 +110,11 @@ class ClientHandler(ContentHandler):
             self.Ack(OPTION)
 
     def send(self, message):
+        u"""Método Enviar."""
         my_socket.send(bytes(message, 'utf-8'))
 
     def Register(self, option):
-        """ Método REGISTER."""
+        u"""Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"]
         head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
         head_register += " SIP/2.0\r\nExpires: " + option + "\r\n\r\n"
@@ -122,7 +130,7 @@ class ClientHandler(ContentHandler):
         self.receive()
 
     def Invite(self, option):
-        """ Método INVITE."""
+        u"""Método INVITE."""
         head_invite = "INVITE sip:" + option
         head_invite += " SIP/2.0\r\nContent-Type: application/sdp\r\n\r\n"
         head_invite += "v=0\r\no=" + self.Trunk[0]["account"]["username"]
@@ -141,7 +149,7 @@ class ClientHandler(ContentHandler):
         self.receive()
 
     def Ack(self, option):
-        """ Método ACK."""
+        u"""Método ACK."""
         head_ack = "ACK sip:" + option + " SIP/2.0"
         self.send(head_ack)
 
@@ -152,7 +160,7 @@ class ClientHandler(ContentHandler):
         self.to_log_txt(log_msg)
 
     def Bye(self, option):
-        """ Método BYE."""
+        u"""Método BYE."""
         head_bye = "BYE sip:" + option + " SIP/2.0"
         self.send(head_bye)
 
