@@ -103,6 +103,7 @@ class EHand(socketserver.DatagramRequestHandler):
             if User == line.split(":")[0]:
                 found = True
         return found
+
     def handle(self):
         """Recepcion y envio de mensajes."""
 
@@ -180,12 +181,14 @@ class EHand(socketserver.DatagramRequestHandler):
 
                 IP = self.Get_IP_PORT(To_user)[0]
                 PORT = self.Get_IP_PORT(To_user)[1]
-                handler.to_log_txt("Sent to " + IP + ":" + str(PORT) + ": " + line)
+                Log_Txt = "Sent to " + IP + ":" + str(PORT) + ": " + line
+                handler.to_log_txt(Log_Txt)
 
                 data = my_socket.recv(1024)
                 data_rcv = data.decode("utf-8")
 
-                log_txt = "Received from " + IP + ":" + str(PORT) + ": " + data_rcv
+                log_txt = "Received from " + IP + ":"
+                log_txt += str(PORT) + ": " + data_rcv
                 handler.to_log_txt(log_txt)
 
                 self.wfile.write(bytes(data_rcv, 'utf-8'))
