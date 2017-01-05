@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+"""Programa final PTAVI SERVIDOR."""
+
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 import socketserver
@@ -11,7 +13,10 @@ import os
 
 
 class ServerHandler(ContentHandler):
+    """Manejador Servidor."""
+
     def __init__(self):
+        u"""Método Inicializar."""
         self.Trunk = []
         self.General = {"account": ["username", "passwd"],
                         "uaserver": ["ip", "puerto"],
@@ -30,6 +35,7 @@ class ServerHandler(ContentHandler):
         self.RTP_Port = ""
 
     def to_log_txt(self, txt):
+        u"""Método para guardar en el LOG."""
         log_xml = open(self.Trunk[4]["log"]["path"], 'a')
 
         Time = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
@@ -44,6 +50,7 @@ class ServerHandler(ContentHandler):
         print(Log_Record_Fix[:-1])
 
     def startElement(self, name, attrs):
+        u"""Método Inicio."""
         if name in self.General:
             Value_Box = {}
             for i in self.General[name]:
@@ -52,6 +59,7 @@ class ServerHandler(ContentHandler):
             self.Trunk.append(General_Slice)
 
     def receive(self):
+        u"""Método recepción."""
         try:
             data = my_socket.recv(1024)
         except:
@@ -93,10 +101,11 @@ class ServerHandler(ContentHandler):
             self.receive()
 
     def send(self, message):
+        u"""Método Enviar."""
         my_socket.send(bytes(message, 'utf-8'))
 
     def Register(self):
-        """ Método REGISTER."""
+        u"""Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"]
         head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
         head_register += " SIP/2.0\r\nExpires: " + "0" + "\r\n\r\n"
@@ -115,7 +124,6 @@ class EHand(socketserver.DatagramRequestHandler):
 
     def handle(self):
         """Recepcion y envio de mensajes."""
-
         #Datos recibidos
         line = self.rfile.read()
         line = line.decode("utf-8")
