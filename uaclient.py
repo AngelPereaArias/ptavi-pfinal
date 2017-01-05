@@ -86,7 +86,7 @@ class ClientHandler(ContentHandler):
             head_register = "REGISTER sip:" + acc_username + ":" + serv_port
             head_register += " SIP/2.0\r\nExpires: " + OPTION
             head_register += '\r\nAuthorization: Digest response="'
-            head_register += Dig_resp + '"' + "\r\n"
+            head_register += Dig_resp + '"' + "\r\n\r\n"
             self.send(head_register)
 
             #Guardamos en el LOG.
@@ -100,7 +100,7 @@ class ClientHandler(ContentHandler):
 
         #Recibimos TRYING/RINGING/OK.
         elif data_rcv[:11] == "SIP/2.0 100":
-            self.Ack(OPTION)
+            self.Ack(OPTION)                
 
     def send(self, message):
         my_socket.send(bytes(message, 'utf-8'))
@@ -109,7 +109,7 @@ class ClientHandler(ContentHandler):
         """ Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"]
         head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
-        head_register += " SIP/2.0\r\nExpires: " + option
+        head_register += " SIP/2.0\r\nExpires: " + option + "\r\n\r\n"
         self.send(head_register)
 
         #Guardamos en el LOG.
