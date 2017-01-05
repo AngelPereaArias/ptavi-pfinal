@@ -132,11 +132,8 @@ class EHand(socketserver.DatagramRequestHandler):
         if method == "REGISTER":
             #Mensaje tipo register
             check = line.find("Authorization")
-            print(line.find("Authorization"))
-            print('"' + str(check) + '"')
             if check == -1:
                 #Mensaje sin datos de Registro
-                print("estamos dentro")
                 msg = handler.MSGS[4] + '\r\nWWW Authenticate: Digest nonce="'
                 msg += handler.NONCE + '"\r\n\r\n'
                 self.wfile.write(bytes(msg, 'utf-8'))
@@ -146,11 +143,8 @@ class EHand(socketserver.DatagramRequestHandler):
             else:
                 #Mensaje con datos de Registro
                 list_msg = line.split('\r\n')
-                print("user : " + list_msg[0].split(":")[1])
                 user = list_msg[0].split(":")[1]
-                print(list_msg[2].split('"'))
                 Dig_resp = list_msg[2].split('"')[1]
-                print(Dig_resp)
                 if self.Check_passwd(user, Dig_resp):
                     #Tupla usuario contraseña encontrado.
                     msg = handler.MSGS[2] + "\r\n\r\n"
@@ -178,7 +172,6 @@ class EHand(socketserver.DatagramRequestHandler):
 
             To_user = line.split(" ")[1][4:]
             found = self.User_Found(To_user)
-            print
             if found:
                 my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
