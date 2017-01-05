@@ -82,7 +82,7 @@ class ServerHandler(ContentHandler):
             head_register = "REGISTER sip:" + USERNAME + ":"
             head_register += USER_PORT + " SIP/2.0\r\nExpires: " + "0"
             head_register += '\r\nAuthorization: Digest response="'
-            head_register += Dig_resp + '"'
+            head_register += Dig_resp + '"' + "\r\n\r\n"
             self.send(head_register)
 
             log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
@@ -99,7 +99,7 @@ class ServerHandler(ContentHandler):
         """ Método REGISTER."""
         head_register = "REGISTER sip:" + self.Trunk[0]["account"]["username"]
         head_register += ":" + self.Trunk[1]["uaserver"]["puerto"]
-        head_register += " SIP/2.0\r\nExpires: " + "0"
+        head_register += " SIP/2.0\r\nExpires: " + "0" + "\r\n\r\n"
         self.send(head_register)
 
         log_msg = "Sent to " + self.Trunk[3]["regproxy"]["ip"] + ":"
