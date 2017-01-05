@@ -32,7 +32,6 @@ class ProxyHandler(ContentHandler):
                      "SIP/2.0 405 Method Not Allowed"]
         self.NONCE = str(random.getrandbits(100))
         self.DataBase = "Database.txt"
-        self.Invite_name = ""
 
     def startElement(self, name, attrs):
         """obtencion datos del fichero xml."""
@@ -75,7 +74,7 @@ class EHand(socketserver.DatagramRequestHandler):
     """Clase socketserver proxy_registrar.py."""
 
     def Check_passwd(self, user, Dig_resp):
-        u"""Método usuarios y passwords, creamos Dig_resp y comparamos las dos para ver si son igauales."""
+        u"""Método comparación passwd-digresp."""
         Find = False
         passwd = open(handler.Trunk[1]["database"]["passwdpath"], 'r')
         lines = passwd.readlines()
@@ -176,8 +175,6 @@ class EHand(socketserver.DatagramRequestHandler):
                     log_txt = "Sent to " + IP + ":" + str(PORT) + ": " + msg
                     handler.to_log_txt(log_txt)
         elif method == "INVITE":
-
-            handler.Invite_name = line.split("o=")[1].split("\r\n")[0]
 
             To_user = line.split(" ")[1][4:]
             found = self.User_Found(To_user)
