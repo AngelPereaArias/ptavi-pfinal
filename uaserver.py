@@ -182,7 +182,8 @@ if __name__ == "__main__":
     try:
         UA2_XML = sys.argv[1]
     except:
-        sys.exit("Usage: python3 uaserver.py config")
+        print("Usage: python3 uaserver.py config")
+        sys.exit("       python3 uaserver.py ua2.xml")
 
     print("Listening...")
 
